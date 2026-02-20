@@ -21,6 +21,14 @@ jobs:
       run: docker-compose up -d db
     - name: Wait for DB
       run: sleep 5
+    - name: Create Backend Test Env
+      run: |
+        echo "POSTGRES_USER=utm_admin" > backend/.env.test
+        echo "POSTGRES_PASSWORD=utm_password" >> backend/.env.test
+        echo "POSTGRES_DB=utm_database" >> backend/.env.test
+        echo "PORT=3000" >> backend/.env.test
+        echo "DATABASE_URL=postgres://utm_admin:utm_password@127.0.0.1:5434/utm_database" >> backend/.env.test
+        echo "JWT_SECRET=utm_super_secret_dev_key" >> backend/.env.test
     - run: cd backend && npm test
 
   test-frontend:
@@ -32,6 +40,10 @@ jobs:
       with:
         node-version: 18.x
     - run: cd frontend && npm ci
+    - name: Create Frontend Test Env
+      run: |
+        echo "VITE_API_URL=http://127.0.0.1:3000/api" > frontend/.env.test
+        echo "VITE_MAPBOX_TOKEN=pk.dummy_token_for_vitest" >> frontend/.env.test
     - run: cd frontend && npm test
     - run: cd frontend && npm run build
 
@@ -43,6 +55,17 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: 18.x
+    - name: Create Global Environment File
+      run: |
+        echo "POSTGRES_USER=utm_admin" > .env
+        echo "POSTGRES_PASSWORD=utm_password" >> .env
+        echo "POSTGRES_DB=utm_database" >> .env
+        echo "PORT=3000" >> .env
+        echo "DATABASE_URL=postgres://utm_admin:utm_password@127.0.0.1:5434/utm_database" >> .env
+        echo "JWT_SECRET=utm_super_secret_dev_key" >> .env
+        echo "VITE_API_URL=http://127.0.0.1:3000/api" >> .env
+        echo "VITE_MAPBOX_TOKEN=pk.dummy_token_to_bypass_playwright_auth" >> .env
+        cp .env frontend/.env
     - name: Start Application Services
       run: docker-compose up -d --build
     - name: Wait for services to be ready
