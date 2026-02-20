@@ -1,0 +1,50 @@
+steps:
+  # Build Backend
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/utm-backend:$COMMIT_SHA', './backend']
+    
+  # Push Backend
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/utm-backend:$COMMIT_SHA']
+
+  # Deploy Backend to Cloud Run (Stateless)
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+    - 'run'
+    - 'deploy'
+    - 'utm-backend-service'
+    - '--image'
+    - 'gcr.io/$PROJECT_ID/utm-backend:$COMMIT_SHA'
+    - '--region'
+    - 'us-central1'
+    - '--platform'
+    - 'managed'
+    - '--allow-unauthenticated'
+
+  # Build Frontend
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/utm-frontend:$COMMIT_SHA', './frontend']
+
+  # Push Frontend
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/utm-frontend:$COMMIT_SHA']
+
+  # Deploy Frontend to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+    - 'run'
+    - 'deploy'
+    - 'utm-frontend-service'
+    - '--image'
+    - 'gcr.io/$PROJECT_ID/utm-frontend:$COMMIT_SHA'
+    - '--region'
+    - 'us-central1'
+    - '--platform'
+    - 'managed'
+    - '--allow-unauthenticated'
+
+images:
+  - 'gcr.io/$PROJECT_ID/utm-backend:$COMMIT_SHA'
+  - 'gcr.io/$PROJECT_ID/utm-frontend:$COMMIT_SHA'
