@@ -5,9 +5,10 @@
   "main": "index.js",
   "scripts": {
     "test": "jest",
+    "test:integration": "cross-env NODE_ENV=test jest --runInBand",
     "build": "tsc",
     "start": "node dist/index.js",
-    "dev": "tsx watch src/index.ts",
+    "dev": "tsx watch --import ./src/env.ts src/index.ts",
     "simulate": "tsx src/scripts/simulator.ts",
     "simulate:swarm": "tsx src/scripts/simulator.ts --drones=10",
     "migrate:up": "node-pg-migrate up"
@@ -38,6 +39,7 @@
     "@babel/core": "^7.29.0",
     "@babel/preset-env": "^7.29.0",
     "@babel/preset-typescript": "^7.28.5",
+    "@turf/turf": "^7.3.4",
     "@types/bcrypt": "^6.0.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
@@ -48,6 +50,7 @@
     "@types/pg": "^8.16.0",
     "@types/supertest": "^6.0.3",
     "babel-jest": "^30.2.0",
+    "cross-env": "^10.1.0",
     "jest": "^30.2.0",
     "nodemon": "^3.1.11",
     "supertest": "^7.2.2",

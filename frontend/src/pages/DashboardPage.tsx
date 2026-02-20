@@ -18,6 +18,16 @@ export const DashboardPage = () => {
                 <AdminPanel />
                 <FlightPlanner />
                 <FlightList />
+                {auth.token && (
+                    <div style={{ padding: '1rem', borderTop: '1px solid #495057', display: 'flex', justifyContent: 'center' }}>
+                        <button
+                            onClick={() => useMapStore.getState().logout()}
+                            style={{ padding: '0.4rem 1rem', background: '#f03e3e', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                        >
+                            Logout
+                        </button>
+                    </div>
+                )}
             </div>
             <div style={{ flex: 1, position: 'relative' }}>
                 <MapView />

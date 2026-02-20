@@ -10,16 +10,28 @@ export class GeofencingController {
     // In-memory store to hold active drones for the frontend map to render
     private activeDrones: Map<string, any> = new Map();
 
+    private cachedNFZs: any[] = [];
+    private lastNFZUpdate: number = 0;
+    private readonly CACHE_TTL_MS = 30000; // 30 seconds caching for scaling
+
     constructor() {
         this.service = new GeofencingService();
         this.repository = new GeofencingRepository();
     }
 
+    private getActiveNFZs = async () => {
+        if (Date.now() - this.lastNFZUpdate > this.CACHE_TTL_MS) {
+            this.cachedNFZs = await this.repository.fetchActiveNFZs();
+            this.lastNFZUpdate = Date.now();
+        }
+        return this.cachedNFZs;
+    };
+
     // POST /api/flight-intent
     public submitFlightIntent = async (req: Request, res: Response): Promise<void> => {
         try {
             const intent: FlightIntent = req.body;
-            const activeNFZs = await this.repository.fetchActiveNFZs();
+            const activeNFZs = await this.getActiveNFZs();
 
             const isClear = this.service.isRouteClear(intent.plannedRoute, activeNFZs);
 
@@ -38,10 +50,10 @@ export class GeofencingController {
     public checkTelemetry = async (req: Request, res: Response): Promise<void> => {
         try {
             const telemetry: DroneTelemetry = req.body;
-            const activeNFZs = await this.repository.fetchActiveNFZs();
+            const activeNFZs = await this.getActiveNFZs();
 
-            // Pass all known drone points down for V2V checking
-            const allDrones = Array.from(this.activeDrones.values());
+            // Pass all known drone points down for V2V checking (iterable directly without copy to array)
+            const allDrones = this.activeDrones.values();
             const status = this.service.isCurrentPositionSafe(telemetry, activeNFZs, allDrones);
 
             // Update in-memory tracker
@@ -73,7 +85,7 @@ export class GeofencingController {
     // GET /api/no-fly-zones
     public getNoFlyZones = async (req: Request, res: Response): Promise<void> => {
         try {
-            const zones = await this.repository.fetchActiveNFZs();
+            const zones = await this.getActiveNFZs();
             res.status(200).json(zones);
         } catch (err) {
             console.error(err);
@@ -93,7 +105,8 @@ export class GeofencingController {
             await this.repository.insertNoFlyZone(zoneId, geojson);
 
             // Re-fetch the updated NFZs into the active memory cache for fast Turf checking
-            const activeNFZs = await this.repository.fetchActiveNFZs();
+            this.lastNFZUpdate = 0; // Invalidate cache immediately
+            const activeNFZs = await this.getActiveNFZs();
 
             res.status(201).json({ message: 'No-Fly Zone Created successfully', zones: activeNFZs.length });
         } catch (err) {

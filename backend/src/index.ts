@@ -19,8 +19,6 @@ app.get('/health', (req, res) => {
     res.status(200).send('UTM Backend is Healthy');
 });
 
-if (process.env.NODE_ENV !== 'test') {
-    app.listen(port, () => {
-        console.log(`UTM Backend Engine listening on port ${port}`);
-    });
-}
+app.listen(Number(port), '0.0.0.0', () => {
+    console.log(`UTM Backend Engine listening on port ${port}`);
+});

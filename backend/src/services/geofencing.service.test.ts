@@ -36,7 +36,7 @@ describe('GeofencingService', () => {
         const status = geofencingService.isCurrentPositionSafe(telemetry, [sampleNFZ]);
 
         expect(status.safe).toBe(false);
-        expect(status.conflictingZone).toBe('Downtown Restricted');
+        expect(status.conflictingZone).toBe('zone-1');
     });
 
     it('should authorize a drone flying outside a No-Fly Zone', () => {

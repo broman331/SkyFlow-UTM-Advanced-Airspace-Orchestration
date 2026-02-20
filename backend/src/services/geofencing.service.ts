@@ -24,7 +24,7 @@ export class GeofencingService {
     /**
      * Evaluates if a drone's current live telemetry point is violating a No-Fly Zone.
      */
-    public isCurrentPositionSafe(telemetry: DroneTelemetry, activeNFZs: NFZ[], activeDrones?: DroneTelemetry[]): { safe: boolean, conflictingZone?: string } {
+    public isCurrentPositionSafe(telemetry: DroneTelemetry, activeNFZs: NFZ[], activeDrones?: Iterable<DroneTelemetry>): { safe: boolean, conflictingZone?: string } {
         const currentPos = point(telemetry.currentPos.geometry.coordinates);
 
         // Check Static/Dynamic No-Fly Zones
@@ -35,12 +35,22 @@ export class GeofencingService {
         }
 
         // Check Vehicle-to-Vehicle (V2V) Proximity
-        if (activeDrones && activeDrones.length > 0) {
+        if (activeDrones) {
             for (const otherDrone of activeDrones) {
                 // Don't compare against itself
                 if (otherDrone.droneId === telemetry.droneId) continue;
 
-                const otherPos = point(otherDrone.currentPos.geometry.coordinates);
+                const myLng = currentPos.geometry.coordinates[0] || 0;
+                const myLat = currentPos.geometry.coordinates[1] || 0;
+                const otherLng = otherDrone.currentPos.geometry.coordinates[0] || 0;
+                const otherLat = otherDrone.currentPos.geometry.coordinates[1] || 0;
+
+                // Fast spatial bounding box filter (~111 meters per 0.001 deg)
+                if (Math.abs(myLat - otherLat) > 0.001 || Math.abs(myLng - otherLng) > 0.001) {
+                    continue;
+                }
+
+                const otherPos = point([otherLng, otherLat]);
                 const distKm = distance(currentPos, otherPos, { units: 'kilometers' });
 
                 // If within 50 meters (0.05 km), flag a proximity warning

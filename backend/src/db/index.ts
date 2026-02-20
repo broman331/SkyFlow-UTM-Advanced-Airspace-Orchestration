@@ -2,7 +2,8 @@ import { Pool } from 'pg';
 
 export const dbPool = new Pool({
     // Read from the docker-compose environment vars
-    connectionString: process.env.DATABASE_URL || 'postgres://utm_admin:utm_password@localhost:5432/utm_database',
+    connectionString: process.env.DATABASE_URL || 'postgres://utm_admin:utm_password@localhost:5434/utm_database',
+    connectionTimeoutMillis: 5000, // Fail fast instead of hanging indefinitely
 });
 
 // Test connection on boot
